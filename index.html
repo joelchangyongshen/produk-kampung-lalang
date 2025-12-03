@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Produk Kampung Lalang</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2F6B38">
+  <style>
+    :root{--bg:#F8F6EE;--card:#fff;--muted:#9CA3AF;--accent:#2F6B38}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    body{background:var(--bg);color:#1f2937}
+    .wrap{max-width:920px;margin:0 auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;gap:12px;align-items:center}
+    .logo svg{width:46px;height:46px}
+    .brand{line-height:1}
+    .brand .line1{font-size:12px;color:var(--accent);font-weight:700}
+    .brand .line2{font-size:18px;font-weight:800;color:#234E2E;line-height:1}
+    .btn{background:#fff;border:2px solid #d1d5db;padding:8px 14px;border-radius:12px;font-weight:600}
+    .search{margin-top:14px}
+    .search input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid #efece2;background:#fff;font-size:16px}
+    .top-actions{display:flex;gap:8px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:18px}
+    .card{background:var(--card);border-radius:12px;padding:18px;display:flex;flex-direction:column;align-items:center;box-shadow:0 1px 0 rgba(0,0,0,0.02)}
+    .card img{width:72px;height:72px;object-fit:contain}
+    .card .title{margin-top:12px;font-weight:700;color:#374151;text-align:center}
+    .price{margin-top:6px;font-weight:700;color:#065f46}
+    .small{font-size:13px;color:#6b7280}
+    footer{margin-top:20px;text-align:center;color:#6b7280;font-size:13px}
+    /* modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;display:none}
+    .modal.open{display:flex}
+    .modal .box{background:white;padding:18px;border-radius:12px;max-width:480px;width:100%}
+    /* admin panel */
+    .admin{background:#fff;border-radius:12px;padding:14px;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+    .form-row{display:flex;gap:8px}
+    .form-row input, .form-row textarea{flex:1;padding:8px;border-radius:8px;border:1px solid #e6e3da}
+    .btn-primary{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:none;font-weight:700}
+    @media (min-width:640px){.wrap{margin-top:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+          <path d="M4 20s2-7 7-7 7 7 7 7" stroke="#2F6B38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 8s1.5-4 6-4 6 4 6 4" stroke="#2F6B38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="brand">
+          <div class="line1">PRODUK</div>
+          <div class="line2">KAMPUNG<br/>LALANG</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="installBtn" class="btn small" style="display:none">Install</button>
+        <button id="openCart" class="btn small">Cart (<span id="cartCount">0</span>)</button>
+        <button id="goAdmin" class="btn small">Admin</button>
+      </div>
+    </header>
+
+    <div class="search">
+      <input id="searchInput" placeholder="Search produk atau seller..." aria-label="Search" />
+    </div>
+
+    <main id="mainContent">
+      <section id="homeSection">
+        <div class="grid" id="grid"></div>
+      </section>
+
+      <section id="adminSection" style="display:none">
+        <div class="admin">
+          <h3>Admin - Tambah Produk (demo)</h3>
+          <div style="margin-top:8px" class="form-row">
+            <input id="prodTitle" placeholder="Nama produk (contoh: Kuih Lapis)" />
+            <input id="prodPrice" placeholder="Harga (RM)" />
+          </div>
+          <div style="margin-top:8px" class="form-row">
+            <input id="prodImg" placeholder="URL imej (atau kosongkan)" />
+            <input id="prodSeller" placeholder="Nama seller" />
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+            <button id="saveProduct" class="btn-primary">Simpan Produk</button>
+            <button id="backHome" class="btn">Back</button>
+          </div>
+          <div style="margin-top:12px;color:#6b7280;font-size:13px">Produk disimpan di LocalStorage (demo sahaja).</div>
+        </div>
+      </section>
+    </main>
+
+    <footer>© Produk Kampung Lalang</footer>
+  </div>
+
+  <!-- product modal -->
+  <div class="modal" id="productModal">
+    <div class="box">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // sample initial products
+  const defaultProducts = [
+    {id:1,title:'Kuih Seri Muka',price:3.5,img:'assets/kuih_seri_muka.jpg',seller:'Mak Jah'},
+    {id:2,title:'Kuih Lapis',price:4.0,img:'assets/kuih_lapis.jpg',seller:'Cik Siti'},
+    {id:3,title:'Rendang Daging (200g)',price:12.0,img:'assets/rendang.jpg',seller:'Pak Hassan'},
+    {id:4,title:'Kuih Ketayap (3pcs)',price:2.5,img:'assets/kuih_ketayap.jpg',seller:'Auntie Mei'},
+    {id:5,title:'Sambal Ikan Bilis (200g)',price:6.0,img:'assets/sambal.jpg',seller:'Mak Long'}
+  ];
+
+  // storage helpers
+  function loadProducts(){
+    const raw = localStorage.getItem('pkl_products');
+    if(raw) return JSON.parse(raw);
+    localStorage.setItem('pkl_products', JSON.stringify(defaultProducts));
+    return defaultProducts;
+  }
+  function saveProducts(list){
+    localStorage.setItem('pkl_products', JSON.stringify(list));
+  }
+
+  function loadCart(){
+    return JSON.parse(localStorage.getItem('pkl_cart') || '[]');
+  }
+  function saveCart(c){
+    localStorage.setItem('pkl_cart', JSON.stringify(c));
+    renderCartCount();
+  }
+
+  // render grid
+  const grid = document.getElementById('grid');
+  const search = document.getElementById('searchInput');
+  function render(list){
+    grid.innerHTML = '';
+    list.forEach(p=>{
+      const el = document.createElement('div'); el.className='card';
+      el.innerHTML = `<img src="${p.img || '/assets/icons/kuih.svg'}" alt="${p.title}" loading="lazy"/>
+                      <div class="title">${p.title}</div>
+                      <div class="small">Seller: ${p.seller || '-'}</div>
+                      <div class="price">RM ${Number(p.price).toFixed(2)}</div>
+                      <div style="margin-top:10px;width:100%;display:flex;gap:8px">
+                        <button class="btn" data-id="${p.id}" onclick="window.addToCart(${p.id})">Add</button>
+                        <button class="btn" data-id="${p.id}" onclick="window.showProduct(${p.id})">Details</button>
+                      </div>`;
+      grid.appendChild(el);
+    });
+  }
+
+  // initial load
+  let products = loadProducts();
+  render(products);
+
+  search.addEventListener('input', e=>{
+    const q = e.target.value.trim().toLowerCase();
+    render(products.filter(p=>p.title.toLowerCase().includes(q) || (p.seller||'').toLowerCase().includes(q)));
+  });
+
+  // cart
+  window.addToCart = function(id){
+    const p = products.find(x=>x.id===id);
+    if(!p) return alert('Product not found');
+    const c = loadCart();
+    const entry = c.find(x=>x.id===id);
+    if(entry) entry.qty += 1; else c.push({id:id, title:p.title, price:p.price, qty:1});
+    saveCart(c);
+    alert(p.title + ' added to cart (demo)');
+  };
+
+  function renderCartCount(){
+    const c = loadCart();
+    document.getElementById('cartCount').textContent = c.reduce((s,i)=>s+i.qty,0);
+  }
+  renderCartCount();
+
+  // product modal
+  window.showProduct = function(id){
+    const p = products.find(x=>x.id===id);
+    if(!p) return;
+    const modal = document.getElementById('productModal');
+    const html = `<h3 style="margin:0">${p.title}</h3>
+                  <div style="display:flex;gap:12px;margin-top:10px">
+                    <img src="${p.img || '/assets/icons/kuih.svg'}" style="width:120px;height:120px;object-fit:cover;border-radius:8px"/>
+                    <div>
+                      <div class="small">Seller: ${p.seller || '-'}</div>
+                      <div class="price" style="margin-top:8px">RM ${Number(p.price).toFixed(2)}</div>
+                      <p style="margin-top:10px;color:#6b7280">Deskripsi ringkas produk (demo).</p>
+                      <div style="margin-top:10px"><button class="btn-primary" onclick="window.addToCart(${p.id})">Add to cart</button></div>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;text-align:right"><button class="btn" onclick="document.getElementById('productModal').classList.remove('open')">Close</button></div>`;
+    document.getElementById('modalContent').innerHTML = html;
+    modal.classList.add('open');
+  };
+
+  document.getElementById('productModal').addEventListener('click', e=>{
+    if(e.target.id==='productModal') e.currentTarget.classList.remove('open');
+  });
+
+  // admin
+  const goAdmin = document.getElementById('goAdmin');
+  const adminSection = document.getElementById('adminSection');
+  const homeSection = document.getElementById('homeSection');
+  const backHome = document.getElementById('backHome');
+  goAdmin.addEventListener('click', ()=>{ homeSection.style.display='none'; adminSection.style.display='block'; });
+  backHome.addEventListener('click', ()=>{ adminSection.style.display='none'; homeSection.style.display='block'; });
+
+  document.getElementById('saveProduct').addEventListener('click', ()=>{
+    const title = document.getElementById('prodTitle').value.trim();
+    const price = parseFloat(document.getElementById('prodPrice').value) || 0;
+    const img = document.getElementById('prodImg').value.trim();
+    const seller = document.getElementById('prodSeller').value.trim() || 'Seller';
+    if(!title){ alert('Sila masukkan nama produk'); return; }
+    const id = Math.max(0,...products.map(p=>p.id))+1;
+    const newP = {id,title,price,img,seller};
+    products.push(newP);
+    saveProducts(products);
+    render(products);
+    alert('Produk disimpan (demo)');
+    document.getElementById('prodTitle').value=''; document.getElementById('prodPrice').value=''; document.getElementById('prodImg').value=''; document.getElementById('prodSeller').value='';
+    adminSection.style.display='none'; homeSection.style.display='block';
+  });
+
+  // install prompt handling
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+  installBtn.addEventListener('click', async ()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const cho = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display='none';
+  });
+
+  // expose for debugging
+  window._PKL = { loadProducts, saveProducts, loadCart, saveCart };
+})();
+</script>
+
+</body>
+</html>
